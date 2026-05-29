@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://finnhub.io; img-src 'self' data:;" />
 <title>StockS — Stock Analyzer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -703,6 +704,17 @@ footer{text-align:center;padding:18px;color:var(--text-muted);font-size:12px;bor
 <script>
 const BASE = 'https://finnhub.io/api/v1';
 
+// Only allow http/https URLs — blocks javascript:, data:, vbscript: etc.
+function safeUrl(url) {
+  if (!url) return '—';
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:' && u.protocol !== 'http:') return '—';
+    const display = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `<a href="${u.href}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">${display}</a>`;
+  } catch { return '—'; }
+}
+
 // ── API KEY MANAGEMENT ──
 const KEY_STORE = 'finnhub_key';
 const getApiKey = () => localStorage.getItem(KEY_STORE) || '';
@@ -1181,7 +1193,7 @@ function renderOverview(Q,P,M,R) {
     <div class="card"><div class="card-title">ข้อมูลบริษัท</div><div class="kv-list">
       ${kv('อุตสาหกรรม',P.finnhubIndustry||'—')}${kv('ประเทศ',P.country||'—')}${kv('ตลาด',P.exchange||'—')}
       ${kv('Market Cap','$'+fmtB((P.marketCapitalization||0)*1e6))}${kv('จำนวนหุ้น',fmtB((P.shareOutstanding||0)*1e6)+' หุ้น')}
-      <hr class="kv-div">${kv('เว็บไซต์',P.weburl?`<a href="${P.weburl}" target="_blank" style="color:var(--accent)">${P.weburl.replace(/^https?:\/\//,'').replace(/\/$/,'')}</a>`:'—')}
+      <hr class="kv-div">${kv('เว็บไซต์',safeUrl(P.weburl))}
     </div></div>
     <div class="card"><div class="card-title">มูลค่า & กำไร</div><div class="kv-list">
       ${kv('P/E (TTM)',fmt(M.peBasicExclExtraTTM||M.peTTM)+'x')}${kv('P/B',fmt(M.pbQuarterly)+'x')}
